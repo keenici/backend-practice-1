@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Библиотека</title>
+<style>
+:root{--bg:#faf8f5;--card:#fff;--text:#22201c;--muted:#8a847a;--line:#ebe6de;--accent:#b4552d;--accent-d:#963f1b;--err:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+nav{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+nav .wrap{display:flex;align-items:center;gap:20px;height:68px}
+.logo{font-family:Georgia,"Times New Roman",serif;font-size:24px;font-weight:700;letter-spacing:.3px;color:var(--text)}
+.logo span{color:var(--accent)}
+.search{flex:1;max-width:420px;margin-left:auto}
+.search input{width:100%;padding:10px 16px;border:1px solid var(--line);border-radius:99px;background:var(--bg);font-size:15px;color:var(--text)}
+.search input:focus,.field input:focus{outline:2px solid var(--accent);border-color:transparent}
+button{cursor:pointer;border:0;border-radius:10px;padding:10px 20px;font-size:15px;font-weight:600;background:var(--accent);color:#fff;transition:background .15s}
+button:hover{background:var(--accent-d)}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+button.ghost:hover{background:var(--bg)}
+button.danger{background:var(--err)}
+.hero{padding:44px 0 20px;display:flex;align-items:end;justify-content:space-between;gap:16px}
+.hero h1{margin:0;font-family:Georgia,serif;font-size:36px}
+.hero p{margin:6px 0 0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px;padding:16px 0 60px}
+.book{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:transform .18s,box-shadow .18s}
+.book:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(60,40,20,.12)}
+.cover{height:150px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.92);font-family:Georgia,serif;font-size:64px;position:relative}
+.num{position:absolute;top:10px;left:12px;font:600 12px "Segoe UI",sans-serif;opacity:.8}
+.info{padding:16px;flex:1}
+.info h3{margin:0 0 4px;font-size:17px;line-height:1.3}
+.info p{margin:0;color:var(--muted);font-size:14px}
+.year{margin-top:10px;font-size:13px;color:var(--muted)}
+.actions{display:flex;border-top:1px solid var(--line)}
+.actions button{flex:1;border-radius:0;background:transparent;color:var(--muted);padding:11px;font-size:14px;font-weight:500}
+.actions button:hover{background:var(--bg);color:var(--text)}
+.actions button+button{border-left:1px solid var(--line)}
+.actions .del:hover{color:var(--err)}
+.empty{grid-column:1/-1;text-align:center;padding:70px 0;color:var(--muted)}
+.overlay{position:fixed;inset:0;background:rgba(30,22,14,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.overlay.open{display:flex}
+.modal{background:var(--card);border-radius:16px;padding:28px;width:100%;max-width:440px;animation:pop .2s}
+@keyframes pop{from{opacity:0;transform:scale(.96)}}
+.modal h2{margin:0 0 6px;font-family:Georgia,serif;font-size:24px}
+.modal p{margin:0 0 6px;color:var(--muted)}
+.field{margin-top:14px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+.field input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:var(--card);color:var(--text)}
+.field input.bad{border-color:var(--err)}
+.error{color:var(--err);font-size:14px;margin-top:12px;min-height:20px}
+.btns{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);display:grid;gap:8px;z-index:20}
+.toast{background:var(--text);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:pop .2s}
+.toast.e{background:var(--err)}
+@media(max-width:640px){.hero h1{font-size:28px}.hero{flex-direction:column;align-items:flex-start}nav .wrap{gap:10px}.logo{font-size:20px}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <div class="logo">Книжный<span>.</span></div>
+    <div class="search"><input id="search" placeholder="Поиск по названию, автору или номеру"></div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <h1>Каталог книг</h1>
+      <p id="count"></p>
+    </div>
+    <button id="addBtn">Добавить книгу</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="overlay" id="formOverlay">
+  <div class="modal">
+    <h2 id="formTitle">Новая книга</h2>
+    <div class="field"><label for="title">Название</label><input id="title" autocomplete="off"></div>
+    <div class="field"><label for="author">Автор</label><input id="author" autocomplete="off"></div>
+    <div class="field"><label for="year">Год издания</label><input id="year" autocomplete="off"></div>
+    <div class="error" id="formError"></div>
+    <div class="btns">
+      <button class="ghost" id="cancelBtn">Отмена</button>
+      <button id="saveBtn">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="delOverlay">
+  <div class="modal">
+    <h2>Удалить книгу?</h2>
+    <p id="delText"></p>
+    <div class="btns">
+      <button class="ghost" id="delCancel">Отмена</button>
+      <button class="danger" id="delConfirm">Удалить</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const colors = ['#b4552d', '#2f6f6a', '#5a4e8c', '#8c6a2f', '#3d5a80', '#7a3b4e', '#4f7a3b'];
+let books = [], editId = null, deleteId = null;
+
+function toast(msg, isErr) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' e' : '');
+  t.textContent = msg;
+  $('toast').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+async function api(method, url, body) {
+  const opts = { method, headers: {} };
+  if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  try {
+    const res = await fetch(url, opts);
+    const data = await res.json();
+    return { ok: res.ok, status: res.status, data };
+  } catch {
+    toast('Нет связи с сервером', true);
+    return { ok: false, status: 0, data: { error: 'Нет связи с сервером' } };
+  }
+}
+
+async function load() {
+  const r = await api('GET', '/books');
+  if (r.ok) { books = r.data; render(); }
+}
+
+function render() {
+  const q = $('search').value.trim().toLowerCase();
+  const list = books.filter((b) => !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || String(b.id) === q);
+  $('count').textContent = books.length ? `Всего книг: ${books.length}` : '';
+  if (!list.length) {
+    $('grid').innerHTML = `<div class="empty">${books.length ? 'Ничего не найдено' : 'Каталог пока пуст. Добавьте первую книгу.'}</div>`;
+    return;
+  }
+  $('grid').innerHTML = list.map((b) => `
+    <div class="book">
+      <div class="cover" style="background:${colors[b.id % colors.length]}"><span class="num">№ ${b.id}</span>${esc(b.title.trim()[0].toUpperCase())}</div>
+      <div class="info"><h3>${esc(b.title)}</h3><p>${esc(b.author)}</p>${b.year ? `<div class="year">${b.year} г.</div>` : ''}</div>
+      <div class="actions"><button data-edit="${b.id}">Изменить</button><button class="del" data-del="${b.id}">Удалить</button></div>
+    </div>`).join('');
+}
+
+// ---- форма ----
+function openForm(b) {
+  editId = b ? b.id : null;
+  $('formTitle').textContent = b ? 'Редактирование' : 'Новая книга';
+  $('title').value = b ? b.title : '';
+  $('author').value = b ? b.author : '';
+  $('year').value = b && b.year ? b.year : '';
+  showError('');
+  $('formOverlay').classList.add('open');
+  $('title').focus();
+}
+function closeForm() { $('formOverlay').classList.remove('open'); }
+function showError(msg) {
+  $('formError').textContent = msg;
+  $('title').classList.toggle('bad', msg.includes('title'));
+  $('author').classList.toggle('bad', msg.includes('author'));
+  $('year').classList.toggle('bad', msg.includes('year'));
+}
+async function save() {
+  const body = { title: $('title').value, author: $('author').value };
+  if ($('year').value.trim() !== '') body.year = $('year').value.trim();
+  const r = editId ? await api('PUT', '/books/' + editId, body) : await api('POST', '/books', body);
+  if (r.ok) {
+    closeForm();
+    toast(editId ? 'Изменения сохранены' : 'Книга добавлена');
+    load();
+  } else if (r.status === 404) {
+    closeForm(); toast(r.data.error, true); load();
+  } else {
+    showError(r.data.error);
+  }
+}
+
+$('addBtn').onclick = () => openForm();
+$('cancelBtn').onclick = closeForm;
+$('saveBtn').onclick = save;
+$('formOverlay').addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') closeForm(); });
+$('search').oninput = render;
+
+// ---- карточки ----
+$('grid').addEventListener('click', async (e) => {
+  const edit = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
+  if (edit) {
+    const r = await api('GET', '/books/' + edit.dataset.edit);
+    if (r.ok) openForm(r.data); else { toast(r.data.error, true); load(); }
+  }
+  if (del) {
+    const b = books.find((x) => x.id == del.dataset.del);
+    deleteId = b.id;
+    $('delText').textContent = `«${b.title}» будет удалена из каталога.`;
+    $('delOverlay').classList.add('open');
+  }
+});
+$('delCancel').onclick = () => $('delOverlay').classList.remove('open');
+$('delConfirm').onclick = async () => {
+  const r = await api('DELETE', '/books/' + deleteId);
+  $('delOverlay').classList.remove('open');
+  toast(r.ok ? 'Книга удалена' : r.data.error, !r.ok);
+  load();
+};
+
+load();
+</script>
+</body>
+</html>
